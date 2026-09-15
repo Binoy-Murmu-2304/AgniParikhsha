@@ -345,6 +345,18 @@ docker run -p 8000:8000 -p 3000:3000 agnipariksha:3.0
 
 ---
 
+### Option 4: Vercel (Frontend) + Render (Backend) Hybrid Deployment (Recommended for Speed)
+For instant page loads without cold starts:
+1. **Deploy Backend on Render**: Deploy `server.py` as a Python Web Service on Render (`https://agnipariksha-api.onrender.com`).
+2. **Deploy Frontend on Vercel**:
+   - Go to [Vercel Dashboard](https://vercel.com) $\rightarrow$ **New Project** $\rightarrow$ Import Git repo.
+   - Set **Root Directory** to `dashboard`.
+   - Set **Environment Variable**: `NEXT_PUBLIC_API_URL = https://agnipariksha-api.onrender.com`.
+   - Click **Deploy**.
+
+
+---
+
 ## 🏛️ Project Directory Structure
 
 ```text

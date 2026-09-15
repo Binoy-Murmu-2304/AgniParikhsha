@@ -114,10 +114,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-V2_PREPROC_DIR  = "models/v2/preprocessors"
-V2_MODEL_DIR    = "models/v2/module_b"
-THRESHOLDS_PATH = "models/v2/optimal_fusion_thresholds.json"
+V2_PREPROC_DIR  = "models/v2/preprocessors" if os.path.exists("models/v2/preprocessors") else "models/preprocessors"
+V2_MODEL_DIR    = "models/v2/module_b" if os.path.exists("models/v2/module_b") else "models/module_b"
+THRESHOLDS_PATH = "models/v2/optimal_fusion_thresholds.json" if os.path.exists("models/v2/optimal_fusion_thresholds.json") else "models/optimal_fusion_thresholds.json"
 BLIND_CSV       = "ASQD_2.4/asqd_24_blind_test.csv"
+
 
 screener = ModuleAScreener(z_threshold=3.5)
 predictor = AgniParikshaPredictorFast(failure_threshold_168h=45.0)
@@ -660,10 +661,12 @@ def get_dataset_provenance():
 if __name__ == "__main__":
 
     import uvicorn
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", 8000))
     print("\n" + "="*60)
-    print("[AGNI_PARIKSHA] 3.0 FastAPI Server & Telemetry Engine Running!")
-    print("[INFO] Local API URL:         http://127.0.0.1:8000/")
+    print(f"[AGNI_PARIKSHA] 3.0 FastAPI Server & Telemetry Engine Running on http://{host}:{port}/")
     print("[INFO] Interactive API Docs:  http://127.0.0.1:8000/docs")
     print("[INFO] Model Benchmarks:     http://127.0.0.1:8000/api/v2/model-comparison")
     print("="*60 + "\n")
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host=host, port=port)
+

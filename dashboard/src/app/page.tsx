@@ -1011,7 +1011,7 @@ export default function AgniParikshaDashboard() {
             {/* CALIBRATION HEALTH CARDS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 bg-[#14171D] border border-[#323846] rounded-lg space-y-2">
-                <div className="text-slate-400 text-[11px]">CONFORMAL 95% QUANTILE ($q_{\alpha}$):</div>
+                <div className="text-slate-400 text-[11px]">CONFORMAL 95% QUANTILE (q_alpha):</div>
                 <div className="text-2xl font-extrabold text-[#00E5FF]">
                   {calibrationHealth?.current_conformal_quantile ? calibrationHealth.current_conformal_quantile.toFixed(3) : "1.960"}
                 </div>
