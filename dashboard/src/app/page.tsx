@@ -8,7 +8,14 @@ import {
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from "recharts";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const getApiBase = () => {
+  let url = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = `https://${url}`;
+  }
+  return url.replace(/\/$/, "");
+};
+const API_BASE = getApiBase();
 
 const DEVICE_PARAM_MAP: Record<string, { param: string; unit: string; symbol: string }> = {
   DIGITAL_IC: { param: "IDDQ Quiescent Current", unit: "µA", symbol: "Iddq" },
