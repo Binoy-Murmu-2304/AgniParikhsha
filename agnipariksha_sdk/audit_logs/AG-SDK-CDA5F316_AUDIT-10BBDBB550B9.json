@@ -1,0 +1,32 @@
+{
+  "session_id": "AG-SDK-CDA5F316",
+  "audit_id": "AUDIT-10BBDBB550B9",
+  "timestamp": "2026-09-14T17:31:12.001414",
+  "operator_id": "TEST_SYSTEM_OP",
+  "read_only_guarantee": true,
+  "context": {
+    "status": "PARTIAL_CONTEXT",
+    "resolved_device": "DIGITAL_IC",
+    "resolved_test": "THERMAL_BURN_IN",
+    "resolved_param": "IDDQ",
+    "confidence": 0.963
+  },
+  "data_quality_score": 1.0,
+  "instrument_health": "INSTRUMENT_HEALTHY",
+  "recommendation": "RED_HIGH_RISK",
+  "evidence_trail": [
+    "[CONTEXT] Resolved Device: DIGITAL_IC via ResolutionStatus.PARTIAL_CONTEXT (Conf: 0.96)",
+    "[ROUTER] Active Anomaly Model: RobustZScorePopulationDetector",
+    "[ROUTER] Active Forecaster: PhysicsArrheniusTemporalForecaster",
+    "[METRICS] Evaluated 1 components | Green: 0, Yellow: 0, Red: 1",
+    "[BENCHMARK] Chamber Hours Saved: 0.00%"
+  ],
+  "reasons": [
+    "1 components exhibited severe population drift or predicted 168h specification breach."
+  ],
+  "components_summary": {
+    "GREEN": 0,
+    "YELLOW": 0,
+    "RED": 1
+  }
+}

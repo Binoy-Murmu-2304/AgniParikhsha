@@ -1,0 +1,3 @@
+"""
+AgniPariksha Core Module
+"""

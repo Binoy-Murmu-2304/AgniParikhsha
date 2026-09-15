@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  --background: #14171D;
+  --foreground: #E1E4EA;
+  --panel-bg: #1F232D;
+  --panel-header-bg: #181B22;
+  --card-bg: #242934;
+  --border-color: #323846;
+  --telemetry-cyan: #00E5FF;
+  --telemetry-green: #76FF03;
+  --telemetry-amber: #FF9100;
+  --telemetry-red: #FF1744;
+}
+
+body {
+  background: #14171D;
+  color: #E1E4EA;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Open MCT Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #14171D;
+}
+::-webkit-scrollbar-thumb {
+  background: #323846;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00E5FF;
+}

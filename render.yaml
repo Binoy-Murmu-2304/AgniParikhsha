@@ -1,0 +1,40 @@
+# render.yaml — Render Blueprint (Infrastructure as Code)
+# Deploy both services with: https://render.com/deploy
+# Or manually create them in the Render dashboard.
+
+services:
+  # ─── Backend: FastAPI + WebSocket ───────────────────────────────
+  - type: web
+    name: agnipariksha-api
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: PYTHONIOENCODING
+        value: utf-8
+    healthCheckPath: /
+    autoDeploy: true
+
+  # ─── Frontend: Next.js Dashboard ───────────────────────────────
+  - type: web
+    name: agnipariksha-dashboard
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: dashboard
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          name: agnipariksha-api
+          type: web
+          property: host
+    autoDeploy: true
+
