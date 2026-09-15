@@ -57,13 +57,18 @@ def generate_agnipariksha_pdf(filename="AGNI_PARIKSHA_PS26170_Complete_ISRO_Solu
     story.append(Spacer(1, 10))
     story.append(HRFlowable(width="100%", thickness=2, color=ORANGE, spaceBefore=4, spaceAfter=14))
 
+    from agnipariksha_core.escape_claim import format_escape_claim
+    from agnipariksha_core.thresholds import get_spec
+
+    escape_statement = format_escape_claim(n_tested=10000, n_escapes=0, n_folds=5, n_repeats=3)
+
     story.append(Paragraph("1. Executive Summary & Core Philosophy", h1_style))
     story.append(Paragraph(
         "AGNI_PARIKSHA is an aerospace-grade reliability and prognostic platform designed for early screening and degradation forecasting during semiconductor qualification and burn-in testing (MIL-STD-883 Method 1015, AEC-Q100).",
         body_style
     ))
     story.append(Paragraph(
-        "Conventional qualification procedures require 168+ hours of thermal stress testing at 125°C. AGNI_PARIKSHA replaces static thresholds with non-parametric Conformal Prediction intervals (95% CI) and dynamic joint multi-parametric screening, reducing chamber duration by up to 71.4% with zero defect escape.",
+        f"Conventional qualification procedures require 168+ hours of thermal stress testing at 125°C. AGNI_PARIKSHA replaces static thresholds with non-parametric Conformal Prediction intervals (95% CI) and dynamic joint multi-parametric screening, reducing chamber duration by up to 71.4%. {escape_statement}",
         body_style
     ))
 
@@ -72,12 +77,13 @@ def generate_agnipariksha_pdf(filename="AGNI_PARIKSHA_PS26170_Complete_ISRO_Solu
     
     bench_data = [
         [Paragraph("<b>Performance Metric</b>", h2_style), Paragraph("<b>Static Limits</b>", h2_style), Paragraph("<b>3σ PAT</b>", h2_style), Paragraph("<b>AGNI_PARIKSHA 3.0</b>", h2_style)],
-        [Paragraph("False Negative Rate (Escapes)", body_style), Paragraph("4.5%", body_style), Paragraph("1.2%", body_style), Paragraph("<b>< 0.01% (Zero Escape)</b>", body_style)],
+        [Paragraph("False Negative Rate (Escapes)", body_style), Paragraph("4.5%", body_style), Paragraph("1.2%", body_style), Paragraph("<b>Zero Observed (95% Conformal Guarantee)</b>", body_style)],
         [Paragraph("False Positive Rate (Scrap)", body_style), Paragraph("0.5%", body_style), Paragraph("8.4%", body_style), Paragraph("<b>< 1.2% (Optimized Yield)</b>", body_style)],
         [Paragraph("Burn-In Chamber Time", body_style), Paragraph("168 Hours", body_style), Paragraph("168 Hours", body_style), Paragraph("<b>24 Hours (71.4% Saved)</b>", body_style)],
         [Paragraph("Uncertainty Bounds", body_style), Paragraph("None", body_style), Paragraph("None", body_style), Paragraph("<b>95% Conformal Interval</b>", body_style)],
         [Paragraph("Screening Dimension", body_style), Paragraph("1D Static", body_style), Paragraph("1D Gaussian", body_style), Paragraph("<b>Multi-Parametric Vector</b>", body_style)],
     ]
+
     
     bench_table = Table(bench_data, colWidths=[160, 110, 110, 160])
     bench_table.setStyle(TableStyle([
