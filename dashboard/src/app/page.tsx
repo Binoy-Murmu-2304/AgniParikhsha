@@ -9,11 +9,18 @@ import {
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area, ReferenceLine } from "recharts";
 
 const getApiBase = () => {
-  let url = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    url = `https://${url}`;
+  if (typeof window !== "undefined") {
+    const envUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!envUrl) {
+      return "";
+    }
+    let url = envUrl;
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = `https://${url}`;
+    }
+    return url.replace(/\/$/, "");
   }
-  return url.replace(/\/$/, "");
+  return process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 };
 const API_BASE = getApiBase();
 
@@ -265,7 +272,7 @@ export default function AgniParikshaDashboard() {
   };
 
   const downloadQualificationCert = async (comp: ComponentData | null) => {
-    const targetComp = comp || selectedComponent || {
+    const targetComp: ComponentData = comp || selectedComponent || {
       component_id: "ISRO-SAC-2026-001",
       device_family: selectedDevice,
       iddq_0h: 11.2,
@@ -278,11 +285,17 @@ export default function AgniParikshaDashboard() {
     };
 
     try {
-      const response = await fetch(`${API_BASE}/api/v2/download-qualification-cert`, {
+      const endpoint = `${API_BASE}/api/v2/download-qualification-cert`;
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(targetComp),
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -291,33 +304,74 @@ export default function AgniParikshaDashboard() {
       document.body.appendChild(a);
       a.click();
       a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert("Failed to download ISRO Certificate: " + err);
+      console.warn("API cert download failed, using client-side generator fallback:", err);
+      try {
+        const { generateComponentCertPdf } = await import("@/lib/pdf-generator");
+        const pdfBytes = await generateComponentCertPdf(targetComp);
+        const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `ISRO_Qualification_Cert_${targetComp.component_id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (fallbackErr) {
+        alert("Failed to download ISRO Certificate: " + fallbackErr);
+      }
     }
   };
 
   const downloadMasterLotCert = async () => {
+    const lotId = selectedLot || "ISRO_LOT_SAC_2026_01";
+    const compList: ComponentData[] = components.length > 0 ? components : [
+      { component_id: "ISRO-SAC-2026-0001", iddq_0h: 11.2, iddq_24h: 12.1, predicted_168h: 14.8, risk_tier: "GREEN_AUTO_PASS" }
+    ];
+
     try {
-      const response = await fetch(`${API_BASE}/api/v2/download-lot-qualification-cert`, {
+      const endpoint = `${API_BASE}/api/v2/download-lot-qualification-cert`;
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          lot_id: selectedLot || "ISRO_LOT_SAC_2026_01",
-          components: components.length > 0 ? components : [
-            { component_id: "ISRO-SAC-2026-0001", iddq_0h: 11.2, iddq_24h: 12.1, predicted_168h: 14.8, risk_tier: "GREEN_AUTO_PASS" }
-          ]
+          lot_id: lotId,
+          components: compList
         }),
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `ISRO_Master_Lot_${selectedLot || "SAC_2026"}_Cert.pdf`;
+      a.download = `ISRO_Master_Lot_${lotId}_Cert.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert("Failed to download Master Lot Certificate: " + err);
+      console.warn("API lot cert download failed, using client-side generator fallback:", err);
+      try {
+        const { generateMasterLotCertPdf } = await import("@/lib/pdf-generator");
+        const pdfBytes = await generateMasterLotCertPdf(lotId, compList);
+        const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `ISRO_Master_Lot_${lotId}_Cert.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (fallbackErr) {
+        alert("Failed to download Master Lot Certificate: " + fallbackErr);
+      }
     }
   };
 
