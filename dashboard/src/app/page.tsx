@@ -296,6 +296,31 @@ export default function AgniParikshaDashboard() {
     }
   };
 
+  const downloadMasterLotCert = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/v2/download-lot-qualification-cert`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lot_id: selectedLot || "ISRO_LOT_SAC_2026_01",
+          components: components.length > 0 ? components : [
+            { component_id: "ISRO-SAC-2026-0001", iddq_0h: 11.2, iddq_24h: 12.1, predicted_168h: 14.8, risk_tier: "GREEN_AUTO_PASS" }
+          ]
+        }),
+      });
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ISRO_Master_Lot_${selectedLot || "SAC_2026"}_Cert.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      alert("Failed to download Master Lot Certificate: " + err);
+    }
+  };
+
   const paramInfo = DEVICE_PARAM_MAP[selectedDevice] || DEVICE_PARAM_MAP["DIGITAL_IC"];
 
   // NASA GSFC EEE-INST-002 / STDF v4 Parametric Telemetry Data
@@ -385,10 +410,20 @@ export default function AgniParikshaDashboard() {
 
           <button
             onClick={() => downloadQualificationCert(selectedComponent)}
-            className="px-3.5 py-1.5 bg-[#FF9100] hover:bg-[#FF9100]/90 text-black font-extrabold text-xs rounded border border-[#FF9100] flex items-center gap-1.5 cursor-pointer shadow-sm"
+            className="px-3 py-1.5 bg-[#00E5FF]/20 hover:bg-[#00E5FF]/30 text-[#00E5FF] font-bold text-xs rounded border border-[#00E5FF]/50 flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
+            title="Download Component-Wise Qualification Certificate PDF"
           >
-            <Download className="w-3.5 h-3.5" />
-            EXPORT MIL-STD CERT
+            <FileText className="w-3.5 h-3.5 text-[#00E5FF]" />
+            COMPONENT CERT
+          </button>
+
+          <button
+            onClick={downloadMasterLotCert}
+            className="px-3 py-1.5 bg-[#FF9100] hover:bg-[#FF9100]/90 text-black font-extrabold text-xs rounded border border-[#FF9100] flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
+            title="Download Full Lot Master Qualification Certificate PDF"
+          >
+            <Award className="w-3.5 h-3.5" />
+            MASTER LOT CERT
           </button>
         </div>
       </header>
@@ -562,18 +597,6 @@ export default function AgniParikshaDashboard() {
           >
             <Activity className="w-4 h-4 text-[#00E5FF]" />
             1. LIVE ATE STREAM & TELEMETRY GRAPHS
-          </button>
-
-          <button
-            onClick={() => setActiveTab("context")}
-            className={`px-4 py-2 rounded font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "context"
-                ? "bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/50 shadow-sm"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <Binary className="w-4 h-4 text-[#00E5FF]" />
-            2. DOMAIN CONTEXT & IDENTITY RESOLVER
           </button>
 
           <button

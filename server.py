@@ -30,7 +30,7 @@ from agnipariksha_core.escape_claim import format_escape_claim
 from agnipariksha_core.lot_aggregator import aggregate_lot_decisions, LotDecision, LotScreeningResult
 from agnipariksha_core.calibration import CalibrationState, update_calibration, get_retraining_recommendation
 from agnipariksha_core.provenance import DataProvenance
-from generate_pdf import generate_component_qualification_cert
+from generate_pdf import generate_component_qualification_cert, generate_full_lot_qualification_cert
 
 logger = logging.getLogger(__name__)
 
@@ -209,12 +209,24 @@ def get_model_comparison():
 
 @app.post("/api/v2/download-qualification-cert")
 def download_qualification_certificate(payload: dict):
-    """Generates and downloads a MIL-STD-883 Spaceflight Component Qualification Certificate PDF."""
+    """Generates and downloads a MIL-STD-883 Spaceflight Component-Wise Qualification Certificate PDF."""
     try:
         cert_path = generate_component_qualification_cert(payload, "ISRO_Component_Qualification_Cert.pdf")
         return FileResponse(cert_path, media_type="application/pdf", filename="ISRO_Component_Qualification_Cert.pdf")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate qualification certificate: {str(e)}")
+
+
+@app.post("/api/v2/download-lot-qualification-cert")
+def download_lot_qualification_certificate(payload: dict):
+    """Generates and downloads a Master Full Lot Batch Qualification Certificate PDF."""
+    try:
+        lot_id = payload.get("lot_id", "ISRO_LOT_SAC_2026_01")
+        components = payload.get("components", [])
+        cert_path = generate_full_lot_qualification_cert(lot_id, components, "ISRO_Master_Lot_Qualification_Cert.pdf")
+        return FileResponse(cert_path, media_type="application/pdf", filename=f"ISRO_Master_Lot_{lot_id}_Cert.pdf")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate master lot certificate: {str(e)}")
 
 
 from agnipariksha_core.context_resolver.explicit_parser import ExplicitMetadataParser
