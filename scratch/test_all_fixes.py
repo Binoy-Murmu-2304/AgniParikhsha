@@ -1,5 +1,5 @@
 """
-Verification script for AGNI_PARIKSHA 3.0 (AstraGuard) 8 Systemic Fixes.
+Verification script for AGNI_PARIKSHA 3.0 8 Systemic Fixes.
 """
 
 import sys

@@ -26,7 +26,7 @@ def load_manifest():
 
 def run_mil_std_883_audit() -> dict:
     print("=" * 70)
-    print(" 🛰️ ASTRA GUARD 3.0 — MIL-STD-883 & ESCC 9000 QUALIFICATION AUDIT")
+    print(" 🛰️ AGNI_PARIKSHA 3.0 — MIL-STD-883 & ESCC 9000 QUALIFICATION AUDIT")
     print("=" * 70)
     
     audit_results = {}

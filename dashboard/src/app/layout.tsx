@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AGNI_PARIKSHA 3.0 — ISRO Space Component Qualification Engine",
+  title: "AGNI_PARIKSHA — ISRO Space Component Qualification Engine",
   description: "AI-Driven Anomaly Detection & Conformal Prognostics Engine for ISRO Space Applications Centre (PS #26170)",
 };
 

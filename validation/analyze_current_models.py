@@ -42,7 +42,7 @@ df_blind = pd.read_csv(BLIND_CSV)
 results = {}
 
 print("=" * 80)
-print("ASTRA GUARD 2.4 — FROZEN MODEL PERFORMANCE AUDIT")
+print("AGNI_PARIKSHA 3.0 — FROZEN MODEL PERFORMANCE AUDIT")
 print(f"Dataset: {BLIND_CSV}")
 print("=" * 80)
 

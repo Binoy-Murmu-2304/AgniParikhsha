@@ -47,7 +47,7 @@ def main():
 
     if args.action == "resolve":
         print("=" * 60)
-        print("🔍 ASTRA GUARD SDK — CONTEXT RESOLUTION REPORT")
+        print("🔍 AGNI_PARIKSHA SDK — CONTEXT RESOLUTION REPORT")
         print("=" * 60)
         print(f"Status:             {result.context_status}")
         print(f"Resolved Device:    {result.resolved_device_family}")
@@ -58,7 +58,7 @@ def main():
 
     elif args.action == "validate":
         print("=" * 60)
-        print("🛡️ ASTRA GUARD SDK — DATA INTEGRITY & INSTRUMENT QA")
+        print("🛡️ AGNI_PARIKSHA SDK — DATA INTEGRITY & INSTRUMENT QA")
         print("=" * 60)
         print(f"Data Quality Score: {result.data_quality_score:.2f}")
         print(f"Instrument Status:  {result.instrument_health_status}")
@@ -67,7 +67,7 @@ def main():
 
     else:  # analyze or report
         print("=" * 60)
-        print("🚀 ASTRA GUARD SDK — READ-ONLY SCREENING ANALYSIS REPORT")
+        print("🚀 AGNI_PARIKSHA SDK — READ-ONLY SCREENING ANALYSIS REPORT")
         print("=" * 60)
         print(f"Session ID:         {result.session.session_id}")
         print(f"Audit ID:           {result.audit_id}")
