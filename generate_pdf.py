@@ -13,6 +13,7 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, HRFlowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY, TA_RIGHT
+from reportlab.graphics.shapes import Drawing, Rect, Line, String, Circle
 
 
 def generate_agnipariksha_pdf(filename="AGNI_PARIKSHA_PS26170_Complete_ISRO_Solution_Document.pdf"):
@@ -200,7 +201,64 @@ def generate_component_qualification_cert(comp: dict, output_path: str = "ISRO_C
         ('PADDING', (0,0), (-1,-1), 3.5),
     ]))
     story.append(t_shap)
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 4))
+
+    # 4b. VISUAL EXPLAINABILITY CHARTS (DRAWING)
+    story.append(Paragraph("Visual Prognostic Trajectory & SHAP Explanation Charts", h2_style))
+    d_chart = Drawing(540, 62)
+    # Box 1: Conformal Trajectory
+    d_chart.add(Rect(0, 0, 260, 62, fillColor=LIGHT_BG, strokeColor=NAVY, strokeWidth=0.5))
+    d_chart.add(String(8, 49, "Parametric Trajectory & 95% Conformal Safety Band", fontName="Helvetica-Bold", fontSize=7.5, fillColor=NAVY))
+
+    c_x0, c_x24, c_x168 = 40, 40 + int((24 / 168) * 200), 240
+    val_max = max(spec_limit * 1.15, upper_95 * 1.1)
+
+    def get_y_val(val):
+        return 12 + min(1.0, max(0.0, val / val_max)) * 32
+
+    usl_y = get_y_val(spec_limit)
+    d_chart.add(Line(c_x0, usl_y, c_x168, usl_y, strokeColor=ORANGE, strokeWidth=0.8, strokeDashArray=[2, 2]))
+    d_chart.add(String(c_x0 + 5, usl_y + 2, f"USL Limit ({spec_limit:.1f} {unit})", fontName="Helvetica", fontSize=5.5, fillColor=ORANGE))
+
+    py0, py24, py168 = get_y_val(iddq_0h), get_y_val(iddq_24h), get_y_val(pred_168h)
+    py_lower, py_upper = get_y_val(lower_95), get_y_val(upper_95)
+
+    d_chart.add(Line(c_x24, py24, c_x168, py_upper, strokeColor=TEAL, strokeWidth=0.5))
+    d_chart.add(Line(c_x24, py24, c_x168, py_lower, strokeColor=TEAL, strokeWidth=0.5))
+
+    d_chart.add(Line(c_x0, py0, c_x24, py24, strokeColor=NAVY, strokeWidth=1.5))
+    d_chart.add(Line(c_x24, py24, c_x168, py168, strokeColor=TEAL, strokeWidth=1.5))
+
+    d_chart.add(Circle(c_x0, py0, 2, fillColor=NAVY, strokeColor=NAVY))
+    d_chart.add(Circle(c_x24, py24, 2, fillColor=NAVY, strokeColor=NAVY))
+    d_chart.add(Circle(c_x168, py168, 2, fillColor=NAVY, strokeColor=NAVY))
+
+    d_chart.add(String(c_x0 - 4, 3, "0h", fontName="Helvetica", fontSize=5.5, fillColor=DARK_GRAY))
+    d_chart.add(String(c_x24 - 5, 3, "24h", fontName="Helvetica", fontSize=5.5, fillColor=DARK_GRAY))
+    d_chart.add(String(c_x168 - 8, 3, "168h", fontName="Helvetica", fontSize=5.5, fillColor=DARK_GRAY))
+
+    # Box 2: SHAP Physics Attribution Bar Chart
+    d_chart.add(Rect(275, 0, 265, 62, fillColor=LIGHT_BG, strokeColor=NAVY, strokeWidth=0.5))
+    d_chart.add(String(283, 49, "SHAP Physical Feature Attributions (+uA)", fontName="Helvetica-Bold", fontSize=7.5, fillColor=NAVY))
+
+    shap_items = [
+        ("24h Current", shap_24h),
+        ("Velocity v24", shap_v24),
+        ("Z-Score (Z24)", shap_z),
+        ("Arrhenius (125C)", shap_arrhenius),
+    ]
+    b_y = 36
+    max_s = max(1.5, max(abs(v) for _, v in shap_items))
+    for label, val in shap_items:
+        d_chart.add(String(283, b_y, label, fontName="Helvetica", fontSize=6, fillColor=DARK_GRAY))
+        bw = min(95, max(4, int((abs(val) / max_s) * 95)))
+        bc = ORANGE if val > 0.8 else TEAL
+        d_chart.add(Rect(353, b_y - 1, bw, 5, fillColor=bc, strokeColor=bc))
+        d_chart.add(String(358 + bw, b_y, f"{'+' if val >= 0 else ''}{val:.3f}", fontName="Helvetica-Bold", fontSize=5.5, fillColor=NAVY))
+        b_y -= 9
+
+    story.append(d_chart)
+    story.append(Spacer(1, 4))
 
     # 5. SECTION 4: QA DECISION & ESCAPE GUARANTEE
     story.append(Paragraph("4. Quality Assurance (QA) Qualification Verdict", h2_style))
