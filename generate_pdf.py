@@ -205,41 +205,48 @@ def generate_component_qualification_cert(comp: dict, output_path: str = "ISRO_C
 
     # 4b. VISUAL EXPLAINABILITY CHARTS (DRAWING)
     story.append(Paragraph("Visual Prognostic Trajectory & SHAP Explanation Charts", h2_style))
-    d_chart = Drawing(540, 62)
+    d_chart = Drawing(540, 72)
     # Box 1: Conformal Trajectory
-    d_chart.add(Rect(0, 0, 260, 62, fillColor=LIGHT_BG, strokeColor=NAVY, strokeWidth=0.5))
-    d_chart.add(String(8, 49, "Parametric Trajectory & 95% Conformal Safety Band", fontName="Helvetica-Bold", fontSize=7.5, fillColor=NAVY))
+    d_chart.add(Rect(0, 0, 260, 72, fillColor=LIGHT_BG, strokeColor=NAVY, strokeWidth=0.5))
+    d_chart.add(String(8, 58, "Parametric Trajectory & 95% Conformal Safety Band", fontName="Helvetica-Bold", fontSize=7.5, fillColor=NAVY))
 
-    c_x0, c_x24, c_x168 = 40, 40 + int((24 / 168) * 200), 240
-    val_max = max(spec_limit * 1.15, upper_95 * 1.1)
+    c_x0, c_x24, c_x168 = 45, 45 + int((24 / 168) * 190), 235
+    
+    all_vals = [iddq_0h, iddq_24h, pred_168h, lower_95, upper_95, spec_limit]
+    min_v, max_v = min(all_vals), max(all_vals)
+    v_margin = max(0.5, (max_v - min_v) * 0.25)
+    c_y_min_bound = max(0, min_v - v_margin)
+    c_y_max_bound = max_v + v_margin
 
     def get_y_val(val):
-        return 12 + min(1.0, max(0.0, val / val_max)) * 32
+        norm = (val - c_y_min_bound) / (c_y_max_bound - c_y_min_bound)
+        return 18 + min(1.0, max(0.0, norm)) * 34
 
     usl_y = get_y_val(spec_limit)
-    d_chart.add(Line(c_x0, usl_y, c_x168, usl_y, strokeColor=ORANGE, strokeWidth=0.8, strokeDashArray=[2, 2]))
-    d_chart.add(String(c_x0 + 5, usl_y + 2, f"USL Limit ({spec_limit:.1f} {unit})", fontName="Helvetica", fontSize=5.5, fillColor=ORANGE))
+    d_chart.add(Line(c_x0 - 10, usl_y, c_x168 + 10, usl_y, strokeColor=ORANGE, strokeWidth=0.8, strokeDashArray=[2, 2]))
+    usl_lbl_y = usl_y - 7 if usl_y > 48 else usl_y + 2
+    d_chart.add(String(c_x168 - 70, usl_lbl_y, f"USL Limit ({spec_limit:.1f} {unit})", fontName="Helvetica-Bold", fontSize=5.5, fillColor=ORANGE))
 
     py0, py24, py168 = get_y_val(iddq_0h), get_y_val(iddq_24h), get_y_val(pred_168h)
     py_lower, py_upper = get_y_val(lower_95), get_y_val(upper_95)
 
-    d_chart.add(Line(c_x24, py24, c_x168, py_upper, strokeColor=TEAL, strokeWidth=0.5))
-    d_chart.add(Line(c_x24, py24, c_x168, py_lower, strokeColor=TEAL, strokeWidth=0.5))
+    d_chart.add(Line(c_x24, py24, c_x168, py_upper, strokeColor=TEAL, strokeWidth=0.6))
+    d_chart.add(Line(c_x24, py24, c_x168, py_lower, strokeColor=TEAL, strokeWidth=0.6))
 
     d_chart.add(Line(c_x0, py0, c_x24, py24, strokeColor=NAVY, strokeWidth=1.5))
     d_chart.add(Line(c_x24, py24, c_x168, py168, strokeColor=TEAL, strokeWidth=1.5))
 
-    d_chart.add(Circle(c_x0, py0, 2, fillColor=NAVY, strokeColor=NAVY))
-    d_chart.add(Circle(c_x24, py24, 2, fillColor=NAVY, strokeColor=NAVY))
-    d_chart.add(Circle(c_x168, py168, 2, fillColor=NAVY, strokeColor=NAVY))
+    d_chart.add(Circle(c_x0, py0, 2.5, fillColor=NAVY, strokeColor=NAVY))
+    d_chart.add(Circle(c_x24, py24, 2.5, fillColor=NAVY, strokeColor=NAVY))
+    d_chart.add(Circle(c_x168, py168, 2.5, fillColor=NAVY, strokeColor=NAVY))
 
-    d_chart.add(String(c_x0 - 4, 3, "0h", fontName="Helvetica", fontSize=5.5, fillColor=DARK_GRAY))
-    d_chart.add(String(c_x24 - 5, 3, "24h", fontName="Helvetica", fontSize=5.5, fillColor=DARK_GRAY))
-    d_chart.add(String(c_x168 - 8, 3, "168h", fontName="Helvetica", fontSize=5.5, fillColor=DARK_GRAY))
+    d_chart.add(String(c_x0 - 4, 6, "0h", fontName="Helvetica-Bold", fontSize=6, fillColor=DARK_GRAY))
+    d_chart.add(String(c_x24 - 5, 6, "24h", fontName="Helvetica-Bold", fontSize=6, fillColor=DARK_GRAY))
+    d_chart.add(String(c_x168 - 8, 6, "168h", fontName="Helvetica-Bold", fontSize=6, fillColor=DARK_GRAY))
 
     # Box 2: SHAP Physics Attribution Bar Chart
-    d_chart.add(Rect(275, 0, 265, 62, fillColor=LIGHT_BG, strokeColor=NAVY, strokeWidth=0.5))
-    d_chart.add(String(283, 49, "SHAP Physical Feature Attributions (+uA)", fontName="Helvetica-Bold", fontSize=7.5, fillColor=NAVY))
+    d_chart.add(Rect(275, 0, 265, 72, fillColor=LIGHT_BG, strokeColor=NAVY, strokeWidth=0.5))
+    d_chart.add(String(283, 58, "SHAP Physical Feature Attributions", fontName="Helvetica-Bold", fontSize=7.5, fillColor=NAVY))
 
     shap_items = [
         ("24h Current", shap_24h),

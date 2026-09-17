@@ -223,42 +223,56 @@ export async function generateComponentCertPdf(comp: ComponentData): Promise<Uin
   page.drawText("Individual Component Visual Prognostic & SHAP Explanation Charts", {
     x: 40,
     y,
-    size: 9.5,
+    size: 8.5,
     font: fontBold,
     color: navy,
   });
 
-  y -= 12;
+  y -= 14;
+  const boxHeight = 78;
+  const boxY = y - boxHeight;
+
   // Box 1: Conformal Trajectory Curve
   page.drawRectangle({
     x: 40,
-    y: y - 70,
+    y: boxY,
     width: 260,
-    height: 70,
+    height: boxHeight,
     color: lightBg,
     borderColor: navy,
     borderWidth: 0.5,
   });
 
-  page.drawText("Parametric Trajectory & 95% Conformal Safety Band", { x: 45, y: y - 10, size: 7.5, font: fontBold, color: navy });
+  page.drawText("Parametric Trajectory & 95% Conformal Safety Band", { x: 48, y: boxY + boxHeight - 12, size: 7.5, font: fontBold, color: navy });
 
-  const chartX0 = 70;
-  const chartX168 = 280;
+  const chartX0 = 75;
+  const chartX168 = 275;
   const chartX24 = chartX0 + (24 / 168) * (chartX168 - chartX0);
-  const chartYMin = y - 60;
-  const chartYMax = y - 20;
+  const chartPlotMinY = boxY + 22;
+  const chartPlotMaxY = boxY + boxHeight - 20;
 
-  const valMax = Math.max(specLimit * 1.15, upper95 * 1.1);
-  const getYPos = (val: number) => chartYMin + Math.min(1.0, Math.max(0.0, val / valMax)) * (chartYMax - chartYMin);
+  const allDataVals = [iddq0, iddq24, pred168, lower95, upper95, specLimit];
+  const minV = Math.min(...allDataVals);
+  const maxV = Math.max(...allDataVals);
+  const vMargin = Math.max(0.5, (maxV - minV) * 0.25);
+  const chartYMinBound = Math.max(0, minV - vMargin);
+  const chartYMaxBound = maxV + vMargin;
+
+  const getYPos = (val: number) => {
+    const norm = (val - chartYMinBound) / (chartYMaxBound - chartYMinBound);
+    return chartPlotMinY + Math.min(1.0, Math.max(0.0, norm)) * (chartPlotMaxY - chartPlotMinY);
+  };
 
   const uslY = getYPos(specLimit);
   page.drawLine({
-    start: { x: chartX0, y: uslY },
-    end: { x: chartX168, y: uslY },
+    start: { x: chartX0 - 15, y: uslY },
+    end: { x: chartX168 + 10, y: uslY },
     thickness: 0.8,
     color: orange,
   });
-  page.drawText(`USL Limit (${specLimit} ${unit})`, { x: chartX0 + 5, y: uslY + 2, size: 5.5, font, color: orange });
+
+  const uslLabelY = uslY > chartPlotMaxY - 8 ? uslY - 7 : uslY + 2;
+  page.drawText(`USL Limit (${specLimit} ${unit})`, { x: chartX168 - 75, y: uslLabelY, size: 5.5, font: fontBold, color: orange });
 
   const p0 = { x: chartX0, y: getYPos(iddq0) };
   const p24 = { x: chartX24, y: getYPos(iddq24) };
@@ -266,42 +280,33 @@ export async function generateComponentCertPdf(comp: ComponentData): Promise<Uin
   const p168Lower = { x: chartX168, y: getYPos(lower95) };
   const p168Upper = { x: chartX168, y: getYPos(upper95) };
 
-  page.drawLine({
-    start: { x: chartX24, y: p24.y },
-    end: { x: chartX168, y: p168Upper.y },
-    thickness: 0.5,
-    color: rgb(0 / 255, 168 / 255, 150 / 255),
-  });
-  page.drawLine({
-    start: { x: chartX24, y: p24.y },
-    end: { x: chartX168, y: p168Lower.y },
-    thickness: 0.5,
-    color: rgb(0 / 255, 168 / 255, 150 / 255),
-  });
+  page.drawLine({ start: p24, end: p168Upper, thickness: 0.6, color: rgb(0 / 255, 168 / 255, 150 / 255) });
+  page.drawLine({ start: p24, end: p168Lower, thickness: 0.6, color: rgb(0 / 255, 168 / 255, 150 / 255) });
+  page.drawLine({ start: p168Lower, end: p168Upper, thickness: 0.6, color: rgb(0 / 255, 168 / 255, 150 / 255) });
 
   page.drawLine({ start: p0, end: p24, thickness: 1.5, color: navy });
   page.drawLine({ start: p24, end: p168, thickness: 1.5, color: rgb(0 / 255, 168 / 255, 150 / 255) });
 
   [p0, p24, p168].forEach((pt) => {
-    page.drawCircle({ x: pt.x, y: pt.y, size: 2, color: navy });
+    page.drawCircle({ x: pt.x, y: pt.y, size: 2.5, color: navy });
   });
 
-  page.drawText("0h", { x: chartX0 - 4, y: chartYMin - 7, size: 5.5, font, color: darkGray });
-  page.drawText("24h", { x: chartX24 - 5, y: chartYMin - 7, size: 5.5, font, color: darkGray });
-  page.drawText("168h", { x: chartX168 - 8, y: chartYMin - 7, size: 5.5, font, color: darkGray });
+  page.drawText("0h", { x: chartX0 - 4, y: boxY + 8, size: 6.5, font: fontBold, color: darkGray });
+  page.drawText("24h", { x: chartX24 - 6, y: boxY + 8, size: 6.5, font: fontBold, color: darkGray });
+  page.drawText("168h", { x: chartX168 - 9, y: boxY + 8, size: 6.5, font: fontBold, color: darkGray });
 
   // Box 2: SHAP Physics Attribution Bar Chart
   page.drawRectangle({
     x: 310,
-    y: y - 70,
+    y: boxY,
     width: 262,
-    height: 70,
+    height: boxHeight,
     color: lightBg,
     borderColor: navy,
     borderWidth: 0.5,
   });
 
-  page.drawText("SHAP Physical Feature Attributions (+uA)", { x: 315, y: y - 10, size: 7.5, font: fontBold, color: navy });
+  page.drawText("SHAP Physical Feature Attributions", { x: 315, y: boxY + boxHeight - 12, size: 7.5, font: fontBold, color: navy });
 
   const shapBars = [
     { label: "24h Current", val: shap24 },
@@ -310,7 +315,7 @@ export async function generateComponentCertPdf(comp: ComponentData): Promise<Uin
     { label: "Arrhenius (125C)", val: 0.25 },
   ];
 
-  let barY = y - 22;
+  let barY = boxY + boxHeight - 26;
   const maxShapVal = Math.max(1.5, ...shapBars.map((b) => Math.abs(b.val)));
 
   shapBars.forEach((b) => {
@@ -337,7 +342,7 @@ export async function generateComponentCertPdf(comp: ComponentData): Promise<Uin
     barY -= 11;
   });
 
-  y -= 80;
+  y -= (boxHeight + 15);
 
   // Helper function to wrap text into multiple lines
   function wrapTextLines(text: string, maxChars: number = 100): string[] {
