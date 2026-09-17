@@ -24,11 +24,24 @@ const getApiBase = () => {
 };
 const API_BASE = getApiBase();
 
-const DEVICE_PARAM_MAP: Record<string, { param: string; unit: string; symbol: string }> = {
+const LEGACY_FAMILY_MAP: Record<string, string> = {
+  DIGITAL_IC: "digital_ic_74hc",
+  MIXED_SIGNAL_IC: "mixed_signal_adc_dac_pll",
+  MEMS_GYROSCOPE: "mems_gyroscope",
+  IMAGE_SENSOR: "image_sensor_cmos_ccd",
+  PRECISION_VOLTAGE_REF: "voltage_reference_bandgap",
+};
+
+const DEVICE_PARAM_MAP: Record<string, { param: string; unit: string; symbol: symbol } | any> = {
+  digital_ic_74hc: { param: "IDDQ Quiescent Current", unit: "µA", symbol: "Iddq" },
   DIGITAL_IC: { param: "IDDQ Quiescent Current", unit: "µA", symbol: "Iddq" },
+  mixed_signal_adc_dac_pll: { param: "ICC Active Supply Current", unit: "µA", symbol: "Icc" },
   MIXED_SIGNAL_IC: { param: "ICC Active Supply Current", unit: "µA", symbol: "Icc" },
+  mems_gyroscope: { param: "Zero-Rate Bias Offset", unit: "deg/hr", symbol: "ZRO" },
   MEMS_GYROSCOPE: { param: "Zero-Rate Bias Offset", unit: "deg/hr", symbol: "ZRO" },
+  image_sensor_cmos_ccd: { param: "Dark Current Density", unit: "nA/cm²", symbol: "Idark" },
   IMAGE_SENSOR: { param: "Dark Current Density", unit: "nA/cm²", symbol: "Idark" },
+  voltage_reference_bandgap: { param: "VREF Output Drift", unit: "mV", symbol: "Vref" },
   PRECISION_VOLTAGE_REF: { param: "VREF Output Drift", unit: "mV", symbol: "Vref" },
 };
 
@@ -65,19 +78,29 @@ export default function AgniParikshaDashboard() {
   const [customTempVal, setCustomTempVal] = useState<number>(125.0);
   const [customVoltVal, setCustomVoltVal] = useState<number>(5.0);
 
-  // Device Specs State (declared BEFORE useEffect to prevent hoisting errors)
+  // Device Specs State (unique canonical families)
   const [familySpecs, setFamilySpecs] = useState<Record<string, any>>({
     digital_ic_74hc: { family_id: "digital_ic_74hc", family_name: "Digital ICs (74HC/54HC)", parametric_name: "IDDQ_quiescent_leakage_uA", unit: "µA", spec_limit_upper: 45.0, source: "MIL-STD-883", chamber_temp: 125.0, stress_voltage: 5.0 },
-    DIGITAL_IC: { family_id: "DIGITAL_IC", family_name: "Digital ICs (74HC/54HC)", parametric_name: "IDDQ_quiescent_leakage_uA", unit: "µA", spec_limit_upper: 45.0, source: "MIL-STD-883", chamber_temp: 125.0, stress_voltage: 5.0 },
     mixed_signal_adc_dac_pll: { family_id: "mixed_signal_adc_dac_pll", family_name: "Mixed-Signal ICs (ADC/DAC/PLL)", parametric_name: "ICC_active_supply_drift_uA", unit: "µA", spec_limit_upper: 80.0, source: "MIL-STD-883", chamber_temp: 125.0, stress_voltage: 5.0 },
-    MIXED_SIGNAL_IC: { family_id: "MIXED_SIGNAL_IC", family_name: "Mixed-Signal ICs (ADC/DAC/PLL)", parametric_name: "ICC_active_supply_drift_uA", unit: "µA", spec_limit_upper: 80.0, source: "MIL-STD-883", chamber_temp: 125.0, stress_voltage: 5.0 },
     mems_gyroscope: { family_id: "mems_gyroscope", family_name: "MEMS Gyroscopes (IMU/Angular Rate)", parametric_name: "ZRO_bias_offset_drift_deg_per_hr", unit: "deg/hr", spec_limit_upper: 10.0, source: "JEDEC JESD211", chamber_temp: 125.0, stress_voltage: 5.0 },
-    MEMS_GYROSCOPE: { family_id: "MEMS_GYROSCOPE", family_name: "MEMS Gyroscopes (IMU/Angular Rate)", parametric_name: "ZRO_bias_offset_drift_deg_per_hr", unit: "deg/hr", spec_limit_upper: 10.0, source: "JEDEC JESD211", chamber_temp: 125.0, stress_voltage: 5.0 },
     image_sensor_cmos_ccd: { family_id: "image_sensor_cmos_ccd", family_name: "Image Sensors (CMOS/CCD)", parametric_name: "dark_current_density_nA_per_cm2", unit: "nA/cm²", spec_limit_upper: 50.0, source: "ISRO SAC Internal Spec", chamber_temp: 125.0, stress_voltage: 5.0 },
-    IMAGE_SENSOR: { family_id: "IMAGE_SENSOR", family_name: "Image Sensors (CMOS/CCD)", parametric_name: "dark_current_density_nA_per_cm2", unit: "nA/cm²", spec_limit_upper: 50.0, source: "ISRO SAC Internal Spec", chamber_temp: 125.0, stress_voltage: 5.0 },
     voltage_reference_bandgap: { family_id: "voltage_reference_bandgap", family_name: "Precision Voltage References (Bandgap)", parametric_name: "VREF_output_drift_mV", unit: "mV", spec_limit_upper: 5.0, source: "JEDEC JESD25", chamber_temp: 125.0, stress_voltage: 5.0 },
-    PRECISION_VOLTAGE_REF: { family_id: "PRECISION_VOLTAGE_REF", family_name: "Precision Voltage References (Bandgap)", parametric_name: "VREF_output_drift_mV", unit: "mV", spec_limit_upper: 5.0, source: "JEDEC JESD25", chamber_temp: 125.0, stress_voltage: 5.0 },
   });
+
+  const getFamilySpec = (deviceKey: string) => {
+    if (familySpecs[deviceKey]) return familySpecs[deviceKey];
+    const mapped = LEGACY_FAMILY_MAP[deviceKey];
+    if (mapped && familySpecs[mapped]) return familySpecs[mapped];
+    return familySpecs["digital_ic_74hc"] || Object.values(familySpecs)[0] || {};
+  };
+
+  const getParamInfo = (deviceKey: string) => {
+    if (DEVICE_PARAM_MAP[deviceKey]) return DEVICE_PARAM_MAP[deviceKey];
+    const mapped = LEGACY_FAMILY_MAP[deviceKey];
+    if (mapped && DEVICE_PARAM_MAP[mapped]) return DEVICE_PARAM_MAP[mapped];
+    return DEVICE_PARAM_MAP["digital_ic_74hc"];
+  };
+
   const [calibrationHealth, setCalibrationHealth] = useState<any>(null);
   const [provenanceInfo, setProvenanceInfo] = useState<any>(null);
   const [lotBatchResult, setLotBatchResult] = useState<any>(null);
@@ -85,13 +108,14 @@ export default function AgniParikshaDashboard() {
 
   // Sync custom input whenever selectedDevice changes
   useEffect(() => {
-    if (familySpecs[selectedDevice]) {
-      setCustomUslVal(familySpecs[selectedDevice].spec_limit_upper || 45.0);
-      if (familySpecs[selectedDevice].source) {
-        setCustomSourceVal(familySpecs[selectedDevice].source);
+    const spec = getFamilySpec(selectedDevice);
+    if (spec) {
+      setCustomUslVal(spec.spec_limit_upper || 45.0);
+      if (spec.source) {
+        setCustomSourceVal(spec.source);
       }
-      setCustomTempVal(familySpecs[selectedDevice].chamber_temp ?? 125.0);
-      setCustomVoltVal(familySpecs[selectedDevice].stress_voltage ?? 5.0);
+      setCustomTempVal(spec.chamber_temp ?? 125.0);
+      setCustomVoltVal(spec.stress_voltage ?? 5.0);
     }
   }, [selectedDevice, familySpecs]);
 
@@ -375,7 +399,8 @@ export default function AgniParikshaDashboard() {
     }
   };
 
-  const paramInfo = DEVICE_PARAM_MAP[selectedDevice] || DEVICE_PARAM_MAP["DIGITAL_IC"];
+  const paramInfo = getParamInfo(selectedDevice);
+  const currentSpec = getFamilySpec(selectedDevice);
 
   // NASA GSFC EEE-INST-002 / STDF v4 Parametric Telemetry Data
   const telemetryGraphData = components.length > 0
@@ -433,11 +458,11 @@ export default function AgniParikshaDashboard() {
 
         {/* Telemetry Bar */}
         <div className="hidden lg:flex items-center gap-6 text-xs font-mono bg-[#14171D] px-4 py-2 rounded border border-[#323846]">
-          <div><span className="text-slate-400">CHAMBER TEMP:</span> <strong className="text-[#FF9100]">{(familySpecs[selectedDevice]?.chamber_temp ?? 125.0).toFixed(1)}°C</strong></div>
+          <div><span className="text-slate-400">CHAMBER TEMP:</span> <strong className="text-[#FF9100]">{(currentSpec?.chamber_temp ?? 125.0).toFixed(1)}°C</strong></div>
           <div className="h-3.5 w-px bg-[#323846]"></div>
-          <div><span className="text-slate-400">STRESS VOLTAGE:</span> <strong className="text-[#00E5FF]">{(familySpecs[selectedDevice]?.stress_voltage ?? 5.0).toFixed(1)}V</strong></div>
+          <div><span className="text-slate-400">STRESS VOLTAGE:</span> <strong className="text-[#00E5FF]">{(currentSpec?.stress_voltage ?? 5.0).toFixed(1)}V</strong></div>
           <div className="h-3.5 w-px bg-[#323846]"></div>
-          <div><span className="text-slate-400">STATUS:</span> <strong className="text-[#76FF03]">NOMINAL ({(familySpecs[selectedDevice]?.source || customSourceVal || "MIL-STD-883").split(" ")[0]})</strong></div>
+          <div><span className="text-slate-400">STATUS:</span> <strong className="text-[#76FF03]">NOMINAL ({(currentSpec?.source || customSourceVal || "MIL-STD-883").split(" ")[0]})</strong></div>
         </div>
 
         {/* Controls */}
@@ -490,26 +515,32 @@ export default function AgniParikshaDashboard() {
           <span className="text-slate-400 uppercase text-[11px] mr-1 flex items-center gap-1 shrink-0">
             <Cpu className="w-3.5 h-3.5 text-[#00E5FF]" /> Select Device Family:
           </span>
-          {Object.keys(familySpecs).map((famKey) => {
-            const spec = familySpecs[famKey];
-            return (
-              <button
-                key={famKey}
-                onClick={() => setSelectedDevice(famKey)}
-                className={`px-3 py-1 rounded text-[11px] font-bold border transition-all cursor-pointer whitespace-nowrap ${
-                  selectedDevice === famKey
-                    ? "bg-[#00E5FF]/20 text-[#00E5FF] border-[#00E5FF]/60 shadow-sm"
-                    : "bg-[#242934] text-slate-400 border-[#323846] hover:text-white"
-                }`}
-              >
-                {spec.family_name || famKey}
-              </button>
-            );
-          })}
+          {Object.keys(familySpecs)
+            .filter((famKey, idx, self) => {
+              const name = familySpecs[famKey]?.family_name || famKey;
+              return self.findIndex((k) => (familySpecs[k]?.family_name || k) === name) === idx;
+            })
+            .map((famKey) => {
+              const spec = familySpecs[famKey];
+              const isSelected = selectedDevice === famKey || LEGACY_FAMILY_MAP[selectedDevice] === famKey;
+              return (
+                <button
+                  key={famKey}
+                  onClick={() => setSelectedDevice(famKey)}
+                  className={`px-3 py-1 rounded text-[11px] font-bold border transition-all cursor-pointer whitespace-nowrap ${
+                    isSelected
+                      ? "bg-[#00E5FF]/20 text-[#00E5FF] border-[#00E5FF]/60 shadow-sm"
+                      : "bg-[#242934] text-slate-400 border-[#323846] hover:text-white"
+                  }`}
+                >
+                  {spec.family_name || famKey}
+                </button>
+              );
+            })}
         </div>
 
         <div className="text-slate-300 text-[11px] shrink-0">
-          Screening Parametric: <strong className="text-[#00E5FF]">{familySpecs[selectedDevice]?.parametric_name || "IDDQ"}</strong> | Upper Limit: <strong className="text-[#FF9100]">{familySpecs[selectedDevice]?.spec_limit_upper || 45.0} {familySpecs[selectedDevice]?.unit || "µA"}</strong> | Temp: <strong className="text-[#FF9100]">{familySpecs[selectedDevice]?.chamber_temp ?? 125.0}°C</strong> | Stress: <strong className="text-[#00E5FF]">{familySpecs[selectedDevice]?.stress_voltage ?? 5.0}V</strong> ({familySpecs[selectedDevice]?.source || "MIL-STD-883"})
+          Screening Parametric: <strong className="text-[#00E5FF]">{currentSpec?.parametric_name || "IDDQ"}</strong> | Upper Limit: <strong className="text-[#FF9100]">{currentSpec?.spec_limit_upper || 45.0} {currentSpec?.unit || "µA"}</strong> | Temp: <strong className="text-[#FF9100]">{currentSpec?.chamber_temp ?? 125.0}°C</strong> | Stress: <strong className="text-[#00E5FF]">{currentSpec?.stress_voltage ?? 5.0}V</strong> ({currentSpec?.source || "MIL-STD-883"})
         </div>
       </nav>
 
@@ -1111,28 +1142,33 @@ export default function AgniParikshaDashboard() {
 
             {/* Device Family Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {Object.keys(DEVICE_PARAM_MAP).map((fam) => (
-                <div
-                  key={fam}
-                  onClick={() => setSelectedDevice(fam)}
-                  className={`p-3.5 rounded border transition-all cursor-pointer ${
-                    selectedDevice === fam
-                      ? "bg-[#00E5FF]/10 border-[#00E5FF] shadow-sm ring-1 ring-[#00E5FF]"
-                      : "bg-[#14171D] border-[#323846] hover:border-slate-500"
-                  }`}
-                >
-                  <div className="text-xs font-extrabold text-[#00E5FF] mb-1">{fam}</div>
-                  <div className="text-slate-400 text-[10px]">Parameter: <strong className="text-white">{DEVICE_PARAM_MAP[fam].symbol}</strong></div>
-                  <div className="text-slate-400 text-[10px]">Unit: <strong className="text-white">{DEVICE_PARAM_MAP[fam].unit}</strong></div>
-                  <div className="mt-2 text-[10px] text-[#76FF03] font-sans">
-                    {fam === "DIGITAL_IC" && "Arrhenius (Ea=0.68 eV) + Black's"}
-                    {fam === "MIXED_SIGNAL_IC" && "Dielectric + Subthreshold"}
-                    {fam === "MEMS_GYROSCOPE" && "Viscoelastic Creep + TVAC"}
-                    {fam === "IMAGE_SENSOR" && "SRH Trap Gen + TID Radiation"}
-                    {fam === "PRECISION_VOLTAGE_REF" && "Zener / Bandgap Drift"}
-                  </div>
-                </div>
-              ))}
+              {Object.keys(DEVICE_PARAM_MAP)
+                .filter((fam, idx, self) => self.findIndex((k) => DEVICE_PARAM_MAP[k]?.symbol === DEVICE_PARAM_MAP[fam]?.symbol) === idx)
+                .map((fam) => {
+                  const isSelected = selectedDevice === fam || LEGACY_FAMILY_MAP[selectedDevice] === fam || LEGACY_FAMILY_MAP[fam] === selectedDevice;
+                  return (
+                    <div
+                      key={fam}
+                      onClick={() => setSelectedDevice(fam)}
+                      className={`p-3.5 rounded border transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-[#00E5FF]/10 border-[#00E5FF] shadow-sm ring-1 ring-[#00E5FF]"
+                          : "bg-[#14171D] border-[#323846] hover:border-slate-500"
+                      }`}
+                    >
+                      <div className="text-xs font-extrabold text-[#00E5FF] mb-1">{fam}</div>
+                      <div className="text-slate-400 text-[10px]">Parameter: <strong className="text-white">{DEVICE_PARAM_MAP[fam].symbol}</strong></div>
+                      <div className="text-slate-400 text-[10px]">Unit: <strong className="text-white">{DEVICE_PARAM_MAP[fam].unit}</strong></div>
+                      <div className="mt-2 text-[10px] text-[#76FF03] font-sans">
+                        {(fam === "DIGITAL_IC" || fam === "digital_ic_74hc") && "Arrhenius (Ea=0.68 eV) + Black's"}
+                        {(fam === "MIXED_SIGNAL_IC" || fam === "mixed_signal_adc_dac_pll") && "Dielectric + Subthreshold"}
+                        {(fam === "MEMS_GYROSCOPE" || fam === "mems_gyroscope") && "Viscoelastic Creep + TVAC"}
+                        {(fam === "IMAGE_SENSOR" || fam === "image_sensor_cmos_ccd") && "SRH Trap Gen + TID Radiation"}
+                        {(fam === "PRECISION_VOLTAGE_REF" || fam === "voltage_reference_bandgap") && "Zener / Bandgap Drift"}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
 
             {/* CUSTOM SPECIFICATION THRESHOLD CONFIGURATOR PANEL */}
@@ -1143,7 +1179,7 @@ export default function AgniParikshaDashboard() {
                     <Sliders className="w-4 h-4 text-[#FF9100]" /> Custom Device Specification & Threshold Configurator
                   </h3>
                   <p className="text-slate-400 font-sans text-xs">
-                    Modify Upper Specification Limits (USL), parametric units, chamber test temperatures, and voltage stress for <strong>{familySpecs[selectedDevice]?.family_name || selectedDevice}</strong>.
+                    Modify Upper Specification Limits (USL), parametric units, chamber test temperatures, and voltage stress for <strong>{getFamilySpec(selectedDevice)?.family_name || selectedDevice}</strong>.
                   </p>
                 </div>
                 <span className="px-2.5 py-1 rounded bg-[#FF9100]/10 text-[#FF9100] border border-[#FF9100]/30 text-[10px] font-bold">
@@ -1210,7 +1246,7 @@ export default function AgniParikshaDashboard() {
 
               <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#323846]/60">
                 <span className="text-[11px] text-slate-400 font-sans">
-                  Active Custom Spec: <strong className="text-[#00E5FF]">{familySpecs[selectedDevice]?.spec_limit_upper || 45.0} {familySpecs[selectedDevice]?.unit || "µA"}</strong> | Temp: <strong className="text-[#FF9100]">{familySpecs[selectedDevice]?.chamber_temp ?? 125.0}°C</strong> | Voltage: <strong className="text-[#00E5FF]">{familySpecs[selectedDevice]?.stress_voltage ?? 5.0}V</strong> ({familySpecs[selectedDevice]?.source || "MIL-STD-883"})
+                  Active Custom Spec: <strong className="text-[#00E5FF]">{getFamilySpec(selectedDevice)?.spec_limit_upper || 45.0} {getFamilySpec(selectedDevice)?.unit || "µA"}</strong> | Temp: <strong className="text-[#FF9100]">{getFamilySpec(selectedDevice)?.chamber_temp ?? 125.0}°C</strong> | Voltage: <strong className="text-[#00E5FF]">{getFamilySpec(selectedDevice)?.stress_voltage ?? 5.0}V</strong> ({getFamilySpec(selectedDevice)?.source || "MIL-STD-883"})
                 </span>
 
                 <button
@@ -1221,11 +1257,13 @@ export default function AgniParikshaDashboard() {
                     const newVolt = Number(customVoltVal) || 5.0;
                     const newSource = customSourceVal || "ISRO Custom Spec";
 
+                    const canonicalKey = getFamilySpec(selectedDevice)?.family_id || selectedDevice;
+
                     // Update familySpecs state
                     setFamilySpecs((prev) => ({
                       ...prev,
-                      [selectedDevice]: {
-                        ...prev[selectedDevice],
+                      [canonicalKey]: {
+                        ...(prev[canonicalKey] || prev[selectedDevice] || {}),
                         spec_limit_upper: newUsl,
                         chamber_temp: newTemp,
                         stress_voltage: newVolt,

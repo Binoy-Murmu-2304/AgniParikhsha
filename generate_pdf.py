@@ -178,7 +178,7 @@ def generate_component_qualification_cert(comp: dict, output_path: str = "ISRO_C
     # 4. SECTION 3: PHYSICS & EXPLAINABILITY (SHAP & KINETICS)
     story.append(Paragraph("3. Physics-Informed Degradation Kinetics & SHAP Explainability", h2_style))
     story.append(Paragraph(
-        "<b>Arrhenius Thermal Acceleration Model:</b> Degradation velocity $v_{24} = \\frac{I(24h) - I(0h)}{24}$ follows exponential thermal activation $k(T) = A \\cdot \\exp(-E_a / k_B T)$ with $E_a = 0.68\\text{ eV}$ for silicon gate oxide traps.",
+        "<b>Arrhenius Thermal Acceleration Model:</b> Degradation velocity v24 = (I(24h) - I(0h))/24 follows exponential thermal activation k(T) = A * exp(-Ea / kB*T) with Ea = 0.68 eV for silicon gate oxide traps.",
         body_style
     ))
     
@@ -268,7 +268,7 @@ def generate_component_qualification_cert(comp: dict, output_path: str = "ISRO_C
         bg_banner = GREEN_BG
         qa_summary = (
             f"<b>QA VERDICT — FLIGHT PASS (24H EARLY RELEASE):</b><br/>"
-            f"Component <b>{comp_id}</b> exhibits nominal Arrhenius degradation kinetics ($v_{{24}} = {v24:.4f}\\ {unit}/\\text{{hr}}$). "
+            f"Component <b>{comp_id}</b> exhibits nominal Arrhenius degradation kinetics (v24 = {v24:.4f} {unit}/hr). "
             f"The non-parametric 95% Conformal Upper Bound (<b>{upper_95:.2f} {unit}</b>) is safely below the Specification USL ({spec_limit:.1f} {unit}) "
             f"with a <b>{((spec_limit - upper_95) / spec_limit * 100):.1f}% safety margin</b>. "
             f"<b>Recommendation:</b> Qualified for immediate 24h early release. Saves 144 chamber hours."
@@ -278,7 +278,7 @@ def generate_component_qualification_cert(comp: dict, output_path: str = "ISRO_C
         bg_banner = YELLOW_BG
         qa_summary = (
             f"<b>QA VERDICT — EXTENDED TESTING MANDATED:</b><br/>"
-            f"Component <b>{comp_id}</b> exhibits elevated degradation velocity ($v_{{24}} = {v24:.4f}\\ {unit}/\\text{{hr}}$). "
+            f"Component <b>{comp_id}</b> exhibits elevated degradation velocity (v24 = {v24:.4f} {unit}/hr). "
             f"The 95% Conformal Upper Bound (<b>{upper_95:.2f} {unit}</b>) approaches the USL limit ({spec_limit:.1f} {unit}). "
             f"<b>Recommendation:</b> Escalate component to full 168h extended burn-in prior to payload integration."
         )
@@ -287,7 +287,7 @@ def generate_component_qualification_cert(comp: dict, output_path: str = "ISRO_C
         bg_banner = RED_BG
         qa_summary = (
             f"<b>QA VERDICT — LATENT DEFECT SCRAP:</b><br/>"
-            f"Component <b>{comp_id}</b> exhibits severe thermal runaway velocity ($v_{{24}} = {v24:.4f}\\ {unit}/\\text{{hr}}$, $Z = {robust_z:.2f}\\sigma$). "
+            f"Component <b>{comp_id}</b> exhibits severe thermal runaway velocity (v24 = {v24:.4f} {unit}/hr, Z = {robust_z:.2f} σ). "
             f"The 95% Conformal Upper Bound (<b>{upper_95:.2f} {unit}</b>) breaches USL limit ({spec_limit:.1f} {unit}). "
             f"<b>Recommendation:</b> Reject and scrap component immediately at 24h to prevent in-orbit failure."
         )
@@ -306,10 +306,11 @@ def generate_component_qualification_cert(comp: dict, output_path: str = "ISRO_C
     story.append(Spacer(1, 10))
 
     # 6. SIGN-OFF BLOCK
+    code_small = ParagraphStyle('CertCodeSmall', parent=code_style, fontSize=6.5, leading=8.5)
     story.append(Paragraph("5. ISRO QA Inspector Sign-Off & SHA-256 Audit Seal", h2_style))
     sign_data = [
         [Paragraph("<b>Lead QA Reliability Engineer:</b>", body_style), Paragraph("___________________________", body_style), Paragraph("<b>Date & Verification Stamp:</b>", body_style), Paragraph("___________________________", body_style)],
-        [Paragraph("<b>ISRO SAC Authority:</b>", body_style), Paragraph("___________________________", body_style), Paragraph("<b>SHA-256 Cryptographic Hash:</b>", body_style), Paragraph("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", code_style)],
+        [Paragraph("<b>ISRO SAC Authority:</b>", body_style), Paragraph("___________________________", body_style), Paragraph("<b>SHA-256 Cryptographic Hash:</b>", body_style), Paragraph("e3b0c44298fc1c149afbf4c8996fb924<br/>27ae41e4649b934ca495991b7852b855", code_small)],
     ]
     t_sign = Table(sign_data, colWidths=[140, 130, 140, 130])
     t_sign.setStyle(TableStyle([
@@ -443,9 +444,10 @@ def generate_full_lot_qualification_cert(lot_id: str, components_list: list, out
 
     # 5. MASTER SIGN-OFF BLOCK
     story.append(Paragraph("4. ISRO SAC Master Qualification Sign-Off & Seal", h2_style))
+    code_small = ParagraphStyle('MasterCodeSmall', parent=code_style, fontSize=6.5, leading=8.5)
     sign_data = [
         [Paragraph("<b>Chief Reliability Director:</b>", body_style), Paragraph("___________________________", body_style), Paragraph("<b>Date & Stamp:</b>", body_style), Paragraph("___________________________", body_style)],
-        [Paragraph("<b>ISRO SAC Flight QA Head:</b>", body_style), Paragraph("___________________________", body_style), Paragraph("<b>SHA-256 Master Audit Seal:</b>", body_style), Paragraph("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", code_style)],
+        [Paragraph("<b>ISRO SAC Flight QA Head:</b>", body_style), Paragraph("___________________________", body_style), Paragraph("<b>SHA-256 Master Audit Seal:</b>", body_style), Paragraph("9f86d081884c7d659a2feaa0c55ad015<br/>a3bf4f1b2b0b822cd15d6c15b0f00a08", code_small)],
     ]
     t_sign = Table(sign_data, colWidths=[140, 130, 140, 130])
     t_sign.setStyle(TableStyle([

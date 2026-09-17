@@ -339,6 +339,24 @@ export async function generateComponentCertPdf(comp: ComponentData): Promise<Uin
 
   y -= 80;
 
+  // Helper function to wrap text into multiple lines
+  function wrapTextLines(text: string, maxChars: number = 100): string[] {
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let current = "";
+
+    for (const word of words) {
+      if ((current ? current + " " + word : word).length <= maxChars) {
+        current = current ? current + " " + word : word;
+      } else {
+        if (current) lines.push(current);
+        current = word;
+      }
+    }
+    if (current) lines.push(current);
+    return lines;
+  }
+
   // Section 4: QA Verdict
   page.drawText("4. Quality Assurance (QA) Qualification Verdict", {
     x: 40,
@@ -348,7 +366,7 @@ export async function generateComponentCertPdf(comp: ComponentData): Promise<Uin
     color: navy,
   });
 
-  y -= 18;
+  y -= 14;
   const bannerBg = tier === "GREEN_AUTO_PASS" ? greenBg : tier === "YELLOW_EXTENDED_TEST" ? yellowBg : redBg;
   const bannerTitle = tier === "GREEN_AUTO_PASS"
     ? "[PASS] QUALIFIED FOR 24H FLIGHT RELEASE (AUTO-PASS)"
@@ -362,20 +380,27 @@ export async function generateComponentCertPdf(comp: ComponentData): Promise<Uin
     ? `Component ${compId} exhibits elevated degradation velocity (v24 = ${v24.toFixed(4)} ${unit}/hr). Conformal 95% Upper Bound (${upper95.toFixed(2)} ${unit}) approaches USL (${specLimit.toFixed(1)} ${unit}). Assigned to full 168h extended burn-in.`
     : `Component ${compId} exhibits severe thermal runaway velocity (v24 = ${v24.toFixed(4)} ${unit}/hr, Z = ${robustZ.toFixed(2)} sigma). Conformal 95% Upper Bound (${upper95.toFixed(2)} ${unit}) breaches USL (${specLimit.toFixed(1)} ${unit}). Early reject and scrap at 24h.`;
 
+  const verdictLines = wrapTextLines(verdictText, 102);
+  const bannerHeight = 22 + verdictLines.length * 11;
+
   page.drawRectangle({
     x: 40,
-    y: y - 50,
+    y: y - bannerHeight + 5,
     width: 532,
-    height: 60,
+    height: bannerHeight,
     color: bannerBg,
     borderColor: navy,
     borderWidth: 1,
   });
 
-  page.drawText(bannerTitle, { x: 50, y: y - 12, size: 9, font: fontBold, color: navy });
-  page.drawText(verdictText, { x: 50, y: y - 30, size: 7.5, font, color: darkGray });
+  page.drawText(bannerTitle, { x: 50, y: y - 6, size: 8.5, font: fontBold, color: navy });
+  let textY = y - 18;
+  verdictLines.forEach((line) => {
+    page.drawText(line, { x: 50, y: textY, size: 7.5, font, color: darkGray });
+    textY -= 11;
+  });
 
-  y -= 75;
+  y -= (bannerHeight + 15);
 
   // Section 5: Sign-off
   page.drawText("5. ISRO QA Inspector Sign-Off & SHA-256 Audit Seal", {
@@ -386,7 +411,7 @@ export async function generateComponentCertPdf(comp: ComponentData): Promise<Uin
     color: navy,
   });
 
-  y -= 18;
+  y -= 16;
   page.drawRectangle({
     x: 40,
     y: y - 35,
@@ -400,7 +425,7 @@ export async function generateComponentCertPdf(comp: ComponentData): Promise<Uin
   page.drawText("Lead QA Reliability Engineer: _______________________", { x: 50, y: y - 12, size: 8, font, color: darkGray });
   page.drawText("Date & Stamp: _______________________", { x: 310, y: y - 12, size: 8, font, color: darkGray });
   page.drawText("ISRO SAC Authority: _______________________", { x: 50, y: y - 28, size: 8, font, color: darkGray });
-  page.drawText("SHA-256 Seal: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", { x: 310, y: y - 28, size: 6.5, font: fontMono, color: navy });
+  page.drawText("SHA-256 Seal: e3b0c44298fc1c149afbf4c8996fb924...", { x: 310, y: y - 28, size: 6.5, font: fontMono, color: navy });
 
   return await pdfDoc.save();
 }
@@ -626,7 +651,7 @@ export async function generateMasterLotCertPdf(lotId: string, components: Compon
   page.drawText("Chief Reliability Director: _______________________", { x: 50, y: y - 12, size: 8, font, color: darkGray });
   page.drawText("Date & Stamp: _______________________", { x: 310, y: y - 12, size: 8, font, color: darkGray });
   page.drawText("ISRO SAC Flight QA Head: _______________________", { x: 50, y: y - 28, size: 8, font, color: darkGray });
-  page.drawText("SHA-256 Seal: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", { x: 310, y: y - 28, size: 6.5, font: fontMono, color: navy });
+  page.drawText("SHA-256 Seal: 9f86d081884c7d659a2feaa0c55ad015...", { x: 310, y: y - 28, size: 6.5, font: fontMono, color: navy });
 
   return await pdfDoc.save();
 }
